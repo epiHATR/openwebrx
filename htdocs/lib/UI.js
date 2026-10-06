@@ -24,6 +24,7 @@ UI.opBumped = null;
 // Foldable UI sections and their initial states
 UI.sections = {
     'modes'   : true,
+    'channel-key': true,
     'controls': true,
     'settings': false,
     'display' : true

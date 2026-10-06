@@ -243,6 +243,13 @@
                     <div class="openwebrx-section">
                         <div class="openwebrx-modes openwebrx-panel-line"></div>
                     </div>
+                    <div id="openwebrx-section-channel-key" class="openwebrx-section-divider" style="display:none;" onclick="UI.toggleSection(this);">&blacktriangledown;&nbsp;Channel key</div>
+                    <div id="openwebrx-meshtastic-key" class="openwebrx-section" style="display:none;">
+                        <div class="openwebrx-panel-line openwebrx-panel-flex-line">
+                            <input id="openwebrx-meshtastic-key-input" type="password" placeholder="base64 or hex" autocomplete="off" spellcheck="false" title="Meshtastic channel key, base64 or hex.">
+                            <div id="openwebrx-meshtastic-key-reset" class="openwebrx-button" title="Reset to the default public channel key">Default</div>
+                        </div>
+                    </div>
                     <div id="openwebrx-section-controls" class="openwebrx-section-divider" onclick="UI.toggleSection(this);">&blacktriangledown;&nbsp;Controls</div>
                     <div class="openwebrx-section">
                         <div class="openwebrx-panel-line">

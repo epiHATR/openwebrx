@@ -254,6 +254,7 @@ function Demodulator(offset_frequency, modulation) {
     this.squelch_level = -150;
     this.dmr_filter = 3;
     this.audio_service_id = 0;
+    this.meshtastic_key = "";
     this.started = false;
     this.state = {};
     this.secondary_demod = false;
@@ -357,7 +358,8 @@ Demodulator.prototype.set = function () {  //this function sends demodulator par
         "audio_service_id": this.audio_service_id,
         "squelch_level": this.squelch_level,
         "secondary_mod": this.secondary_demod,
-        "secondary_offset_freq": this.secondary_offset_freq
+        "secondary_offset_freq": this.secondary_offset_freq,
+        "meshtastic_key": this.meshtastic_key
     };
     var to_send = {};
     for (var key in params) {
@@ -460,6 +462,15 @@ Demodulator.prototype.set_secondary_demod = function(secondary_demod) {
 
 Demodulator.prototype.get_secondary_demod = function() {
     return this.secondary_demod;
+};
+
+Demodulator.prototype.setMeshtasticKey = function(key) {
+    key = (key || "").trim();
+    if (this.meshtastic_key === key) {
+        return;
+    }
+    this.meshtastic_key = key;
+    this.set();
 };
 
 Demodulator.prototype.set_secondary_offset_freq = function(secondary_offset) {

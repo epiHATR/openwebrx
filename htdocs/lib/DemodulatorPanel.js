@@ -38,6 +38,23 @@ function DemodulatorPanel(el) {
             self.setMode(value);
         }
     });
+    var meshtasticKeyTimer = null;
+    var submitMeshtasticKey = function() {
+        if (meshtasticKeyTimer) {
+            clearTimeout(meshtasticKeyTimer);
+            meshtasticKeyTimer = null;
+        }
+        self.applyMeshtasticKey();
+    };
+    el.on('input', '#openwebrx-meshtastic-key-input', function() {
+        if (meshtasticKeyTimer) clearTimeout(meshtasticKeyTimer);
+        meshtasticKeyTimer = setTimeout(submitMeshtasticKey, 400);
+    });
+    el.on('change', '#openwebrx-meshtastic-key-input', submitMeshtasticKey);
+    el.on('click', '#openwebrx-meshtastic-key-reset', function() {
+        $('#openwebrx-meshtastic-key-input').val('AQ==');
+        submitMeshtasticKey();
+    });
     el.on('click', '.openwebrx-squelch-auto', function() {
         if (!self.squelchAvailable()) return;
         el.find('.openwebrx-squelch-slider').val(getLogSmeterValue(smeter_level) + self.getSquelchMargin());
@@ -161,6 +178,9 @@ DemodulatorPanel.prototype.setMode = function(requestedModulation, underlyingMod
         this.demodulator.set_secondary_demod(false);
     }
 
+    if (mode.modulation === 'meshtastic') {
+        this.demodulator.setMeshtasticKey($('#openwebrx-meshtastic-key-input').val());
+    }
     this.demodulator.start();
     this.mode = mode;
     this.underlyingModulation = underlyingModulation;
@@ -193,6 +213,7 @@ DemodulatorPanel.prototype.updatePanels = function() {
     ['js8', 'page', 'pocsag', 'sstv', 'fax', 'dsc', 'adsb', 'meshtastic'].forEach(function(m) {
         toggle_panel('openwebrx-panel-' + m + '-message', modulation === m);
     });
+    $('#openwebrx-section-channel-key, #openwebrx-meshtastic-key').toggle(modulation === 'meshtastic');
 
     modulation = this.getDemodulator().get_modulation();
     var showing = 'openwebrx-panel-metadata-' + modulation;
@@ -388,6 +409,12 @@ DemodulatorPanel.prototype.updateHash = function() {
     }).filter(function(v) {
         return !!v;
     }).join(',');
+};
+
+DemodulatorPanel.prototype.applyMeshtasticKey = function() {
+    var demod = this.getDemodulator();
+    if (!demod || demod.get_secondary_demod() !== 'meshtastic') return;
+    demod.setMeshtasticKey($('#openwebrx-meshtastic-key-input').val());
 };
 
 DemodulatorPanel.prototype.updateSquelch = function() {

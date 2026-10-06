@@ -11,7 +11,11 @@ ARCH=${ARCH:-$(uname -m)}
 TAG=${TAG:-"latest"}
 ARCHTAG="${TAG}-${ARCH}"
 NIGHTLY_BUILD=$(date +%F)
-CORES=$(cat /proc/cpuinfo | grep processor | wc -l)
+if [[ -f /proc/cpuinfo ]]; then
+  CORES=$(grep -c processor /proc/cpuinfo)
+else
+  CORES=$(sysctl -n hw.ncpu 2>/dev/null || echo 1)
+fi
 MAKEFLAGS="${MAKEFLAGS:-"-j$CORES"}"
 
 usage () {
@@ -188,7 +192,23 @@ dev () {
 }
 
 run () {
-  docker run --rm -it -p 8073:8073 --device /dev/bus/usb openwebrxplus-full:latest-${ARCH}
+  local root
+  root="$(cd "$(dirname "$0")" && pwd)"
+  local args=(
+    -p 8073:8073
+    -v "${root}/owrx:/usr/lib/python3/dist-packages/owrx"
+    -v "${root}/htdocs:/usr/lib/python3/dist-packages/htdocs"
+    -v "${root}/csdr:/usr/lib/python3/dist-packages/csdr"
+  )
+  if [[ -d /dev/bus/usb ]]; then
+    args+=(--device /dev/bus/usb)
+  fi
+  if [[ -t 0 ]]; then
+    args=(-it "${args[@]}")
+  else
+    args=(-d "${args[@]}")
+  fi
+  docker run --rm "${args[@]}" "openwebrxplus-full:latest-${ARCH}"
 }
 
 case ${1:-} in

@@ -211,6 +211,15 @@ class MeshtasticParser(TextParser):
         self.seen   = {}
         self.key    = _resolve_key("AQ==")
 
+    def setKey(self, raw_key: str) -> None:
+        raw = (raw_key or "").strip()
+        if raw == "":
+            raw = "AQ=="
+        try:
+            self.key = _resolve_key(raw)
+        except Exception:
+            logger.warning("Meshtastic channel key was not accepted")
+
     def setDialFrequency(self, frequency: int) -> None:
         super().setDialFrequency(frequency)
         self.band = Bandplan.getSharedInstance().findBand(frequency)

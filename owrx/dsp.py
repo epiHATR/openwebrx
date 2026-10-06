@@ -1,5 +1,6 @@
 from owrx.source import SdrSourceEventClient, SdrSourceState, SdrClientClass
-from owrx.property import PropertyStack, PropertyLayer, PropertyValidator, PropertyDeleted, PropertyDeletion
+from owrx.property import PropertyStack, PropertyLayer, PropertyValidator, PropertyDeleted, PropertyDeletion, PropertyValidationError
+from owrx.property.validators import RegexValidator
 from owrx.property.validators import OrValidator, RegexValidator, BoolValidator
 from owrx.modes import Modes, DigitalMode
 from owrx.rigcontrol import RigControl
@@ -448,6 +449,7 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
 
         # current audio mode. should be "audio" or "hd_audio" depending on what demodulatur is in use.
         self.audioOutput = None
+        self.meshtasticKey = ""
 
         # local demodulator properties not forwarded to the sdr
         # ensure strict validation since these can be set from the client
@@ -467,6 +469,7 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             "nr_enabled": "bool",
             "nr_threshold": "int",
             "rig_transmit": "bool",
+            "meshtastic_key": RegexValidator(re.compile(r"^[A-Za-z0-9+/=_:\-\.]{0,128}$")),
         }
         self.localProps = PropertyValidator(PropertyLayer().filter(*validators.keys()), validators)
 
@@ -562,6 +565,7 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             self.props.wireProperty("wfm_deemphasis_tau", self.chain.setWfmDeemphasisTau),
             self.props.wireProperty("wfm_rds_rbds", self.chain.setRdsRbds),
             self.props.wireProperty("secondary_mod", self.setSecondaryDemodulator),
+            self.props.wireProperty("meshtastic_key", self.setMeshtasticKey),
             self.props.wireProperty("secondary_offset_freq", self.chain.setSecondaryFrequencyOffset),
             self.props.wireProperty("nr_enabled", self.chain.setNrEnabled),
             self.props.wireProperty("nr_threshold", self.chain.setNrThreshold),
@@ -856,6 +860,16 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             self.chain.setSecondaryDemodulator(None)
         else:
             self.chain.setSecondaryDemodulator(demodulator)
+            if hasattr(demodulator, "setKey"):
+                demodulator.setKey(self.meshtasticKey)
+
+    def setMeshtasticKey(self, raw_key):
+        if raw_key is PropertyDeleted or not isinstance(raw_key, str):
+            raw_key = ""
+        self.meshtasticKey = raw_key.strip()
+        demodulator = self.chain.secondaryDemodulator
+        if demodulator is not None and hasattr(demodulator, "setKey"):
+            demodulator.setKey(self.meshtasticKey)
 
     def setAudioCompression(self, comp):
         try:
@@ -953,11 +967,17 @@ class DspManager(SdrSourceEventClient, ClientDemodulatorSecondaryDspEventClient)
             self.setProperty(k, v)
 
     def setProperty(self, prop, value):
-        if value is None:
-            if prop in self.localProps:
-                del self.localProps[prop]
-        else:
-            self.localProps[prop] = value
+        try:
+            if value is None:
+                if prop in self.localProps:
+                    del self.localProps[prop]
+            else:
+                self.localProps[prop] = value
+        except PropertyValidationError:
+            if prop == "meshtastic_key":
+                logger.warning("rejected Meshtastic channel key")
+                return
+            raise
 
     def getClientClass(self) -> SdrClientClass:
         return SdrClientClass.USER

@@ -68,6 +68,10 @@ class MeshtasticDemodulator(LoraDemodulator):
             "-s", "9", "-s", "10", "-s", "11"
         ], MeshtasticParser(service))
 
+    def setKey(self, raw_key: str) -> None:
+        if self.parser is not None and hasattr(self.parser, "setKey"):
+            self.parser.setKey(raw_key)
+
 
 class MeshcoreDemodulator(LoraDemodulator):
     def __init__(self, sampleRate: int = 1000000, service: bool = False):

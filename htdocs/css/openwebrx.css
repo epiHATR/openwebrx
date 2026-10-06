@@ -734,6 +734,24 @@ img.openwebrx-mirror-img
     padding-top: 5px;
 }
 
+#openwebrx-meshtastic-key-input
+{
+    flex: 1;
+    min-width: 0;
+    box-sizing: border-box;
+    height: 22px;
+}
+
+#openwebrx-meshtastic-key-reset
+{
+    margin-left: 4px;
+    height: 22px;
+    line-height: 22px;
+    padding: 0 6px;
+    white-space: nowrap;
+    font-size: 9pt;
+}
+
 .openwebrx-panel-flex-line {
     display: flex;
     flex-direction: row;
